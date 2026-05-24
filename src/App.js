@@ -82,49 +82,13 @@ const NAV = [
 ];
 
 // --- HOLD CHECKBOX ---
-function HoldCheckbox({ checked, onChange }) {
-  const [progress, setProgress] = useState(0);
-  const [holding, setHolding] = useState(false);
-  const holdTimer = useRef(null);
-  const progressTimer = useRef(null);
-  const DURATION = 550;
-
-  const start = () => {
-    if (checked) { onChange(false); return; }
-    setHolding(true);
-    const t0 = Date.now();
-    progressTimer.current = setInterval(() => {
-      setProgress(Math.min((Date.now() - t0) / DURATION, 1));
-    }, 16);
-    holdTimer.current = setTimeout(() => {
-      clearInterval(progressTimer.current);
-      setHolding(false);
-      setProgress(0);
-      onChange(true);
-    }, DURATION);
-  };
-
-  const cancel = () => {
-    clearTimeout(holdTimer.current);
-    clearInterval(progressTimer.current);
-    setHolding(false);
-    setProgress(0);
-  };
-
-  const circ = 2 * Math.PI * 11;
-
+function TapCheckbox({ checked, onChange }) {
   return (
-    <div onMouseDown={start} onMouseUp={cancel} onMouseLeave={cancel}
-      onTouchStart={start} onTouchEnd={cancel}
+    <div onClick={() => onChange(!checked)}
       style={{ cursor: "pointer", userSelect: "none", flexShrink: 0 }}>
       <svg width="30" height="30" viewBox="0 0 30 30">
         <circle cx="15" cy="15" r="12" fill={checked ? C.white : "transparent"}
           stroke={checked ? C.white : C.borderLight} strokeWidth="1.5" />
-        {holding && !checked && (
-          <circle cx="15" cy="15" r="11" fill="none" stroke={C.white} strokeWidth="2"
-            strokeDasharray={circ} strokeDashoffset={circ * (1 - progress)}
-            strokeLinecap="round" transform="rotate(-90 15 15)" />
-        )}
         {checked && (
           <polyline points="9,15 13,19 21,10" fill="none"
             stroke={C.bg} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -226,7 +190,7 @@ function DailyLog({ rules }) {
         activeRules.map((rule, i) => (
           <div key={i} style={{ borderBottom: `1px solid ${C.border}`, paddingTop: "16px", paddingBottom: "16px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "14px" }}>
-              <HoldCheckbox
+              <TapCheckbox
                 checked={entries[i]?.checked || false}
                 onChange={(val) => update(i, { ...entries[i], checked: val })}
               />
@@ -291,7 +255,7 @@ function MonthlyTracker({ rules }) {
   const daysInMonth = getDaysInMonth();
   const today = new Date();
   const todayDay = today.getDate();
-  const monthKey = getMonthKey();
+  
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   const [grid, setGrid] = useState(null);
@@ -329,6 +293,7 @@ function MonthlyTracker({ rules }) {
       setLoading(false);
     }
     loadLogs();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading || !grid) return <Loading />;
@@ -564,6 +529,7 @@ function History({ onSelectMonth }) {
       setLoading(false);
     }
     loadHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) return <Loading />;
@@ -609,7 +575,7 @@ function History({ onSelectMonth }) {
 // --- RULES ---
 function Rules({ rules, setRules }) {
   const MAX = 5;
-  const monthKey = getMonthKey();
+  
   const [saving, setSaving] = useState(false);
   const saveTimer = useRef(null);
 
@@ -624,7 +590,7 @@ function Rules({ rules, setRules }) {
       setSaving(true);
       const d = new Date();
       await supabase.from("rules").upsert({
-        month: monthKey,
+        month: getMonthKey(),
         year: d.getFullYear(),
         rules: next,
       }, { onConflict: "month" });
@@ -684,11 +650,11 @@ export default function AreteApp() {
 
   useEffect(() => {
     async function loadRules() {
-      const monthKey = getMonthKey();
+      
       const { data } = await supabase
         .from("rules")
         .select("*")
-        .eq("month", monthKey)
+        .eq("month", getMonthKey())
         .single();
       if (data && data.rules) {
         setRules(data.rules);
@@ -696,6 +662,7 @@ export default function AreteApp() {
       setRulesLoaded(true);
     }
     loadRules();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const activeRules = rules.filter(r => r.trim() !== "");

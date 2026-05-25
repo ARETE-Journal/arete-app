@@ -81,7 +81,221 @@ const NAV = [
   { id: "rules", label: "Rules", Icon: RulesIcon },
 ];
 
-// --- HOLD CHECKBOX ---
+// --- LOADING ---
+function Loading() {
+  return (
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ fontSize: "10px", letterSpacing: "0.22em", color: C.dim, fontFamily: "Calibri, sans-serif" }}>
+        LOADING
+      </div>
+    </div>
+  );
+}
+
+// --- INPUT STYLE ---
+const inputStyle = {
+  width: "100%",
+  border: "none",
+  borderBottom: `1px solid #3A3A3A`,
+  background: "transparent",
+  fontSize: "15px",
+  fontFamily: "Calibri, sans-serif",
+  color: "#FAFAF8",
+  padding: "10px 0",
+  outline: "none",
+  boxSizing: "border-box",
+  caretColor: "#FAFAF8",
+};
+
+// --- PRIVACY POLICY ---
+function Privacy({ onBack }) {
+  return (
+    <div style={{ flex: 1, overflowY: "auto", padding: "0 24px 48px" }}>
+      <div style={{ paddingTop: "48px" }}>
+        <button onClick={onBack} style={{
+          border: "none", background: "transparent", cursor: "pointer",
+          fontSize: "10px", letterSpacing: "0.14em", color: C.dim,
+          fontFamily: "Calibri, sans-serif", padding: 0, marginBottom: "32px", display: "block",
+        }}>← BACK</button>
+
+        <div style={{ fontSize: "10px", letterSpacing: "0.22em", color: C.mid, fontFamily: "Calibri, sans-serif", marginBottom: "8px" }}>ARETE</div>
+        <div style={{ fontSize: "28px", color: C.white, lineHeight: 1, marginBottom: "8px" }}>Privacy Policy</div>
+        <div style={{ fontSize: "11px", color: C.dim, fontFamily: "Calibri, sans-serif", letterSpacing: "0.08em", marginBottom: "40px" }}>LAST UPDATED: MAY 2026</div>
+
+        {[
+          { title: "Overview", body: "ARETE is a personal execution tracking tool. This policy describes what information we collect, how we use it, and what we do not do with it. It is written plainly because that is how ARETE operates." },
+          { title: "What We Collect", body: "We collect your email address when you create an account. We store the execution rules you set each month and the daily log entries you submit. Nothing else is collected. We do not collect your name, location, device information, or browsing behavior." },
+          { title: "How We Use It", body: "Your email address is used to identify your account and to send password reset emails if you request one. Your rules and logs are stored so the app works as intended — your data persists between sessions and is accessible only to you." },
+          { title: "What We Do Not Do", body: "We do not sell your data. We do not share it with third parties. We do not use it for advertising. We do not analyze it in aggregate. Your data exists to serve you, not us." },
+          { title: "Data Storage", body: "Your data is stored securely using Supabase, a managed database platform. Data is encrypted in transit and at rest. You can request deletion of your account and all associated data at any time by contacting us." },
+          { title: "Contact", body: "Questions about this policy can be directed to hello@getaretejournal.com." },
+        ].map(({ title, body }) => (
+          <div key={title} style={{ marginBottom: "32px" }}>
+            <div style={{ fontSize: "10px", letterSpacing: "0.16em", color: C.mid, fontFamily: "Calibri, sans-serif", marginBottom: "10px" }}>{title.toUpperCase()}</div>
+            <div style={{ fontSize: "14px", color: C.charcoal, fontFamily: "Calibri, sans-serif", lineHeight: 1.7 }}>{body}</div>
+          </div>
+        ))}
+
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: "24px", fontSize: "10px", letterSpacing: "0.14em", color: C.dim, fontFamily: "Calibri, sans-serif" }}>
+          EXECUTE · EVALUATE · REPEAT
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- AUTH SCREEN ---
+function Auth({ onAuth }) {
+  const [mode, setMode] = useState("signin"); // signin | signup | forgot | privacy
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [staySignedIn, setStaySignedIn] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async () => {
+    setError(null);
+    setMessage(null);
+    if (!email || !password) { setError("Please enter your email and password."); return; }
+    setLoading(true);
+
+    if (mode === "signup") {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) { setError(error.message); }
+      else { setMessage("Account created. Check your email to confirm, then sign in."); setMode("signin"); }
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) { setError("Invalid email or password."); }
+      else { onAuth(data.user); }
+    }
+    setLoading(false);
+  };
+
+  const handleForgot = async () => {
+    setError(null);
+    setMessage(null);
+    if (!email) { setError("Enter your email address above first."); return; }
+    setLoading(true);
+    await supabase.auth.resetPasswordForEmail(email);
+    setMessage("Password reset email sent.");
+    setLoading(false);
+  };
+
+  if (mode === "privacy") {
+    return (
+      <div style={{ maxWidth: "390px", margin: "0 auto", height: "100vh", background: C.bg, display: "flex", flexDirection: "column" }}>
+        <Privacy onBack={() => setMode("signin")} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      maxWidth: "390px", margin: "0 auto", height: "100vh",
+      background: C.bg, display: "flex", flexDirection: "column",
+      justifyContent: "center", padding: "0 32px",
+      boxShadow: "0 0 60px rgba(0,0,0,0.5)",
+    }}>
+      {/* Wordmark */}
+      <div style={{ marginBottom: "8px", fontSize: "22px", letterSpacing: "0.26em", color: C.white, fontFamily: "Georgia, serif" }}>
+        ARETE
+      </div>
+      <div style={{ fontSize: "11px", letterSpacing: "0.16em", color: C.mid, fontFamily: "Calibri, sans-serif", marginBottom: "48px" }}>
+        EXCELLENCE THROUGH EXECUTION
+      </div>
+
+      {/* Mode label */}
+      <div style={{ fontSize: "10px", letterSpacing: "0.2em", color: C.mid, fontFamily: "Calibri, sans-serif", marginBottom: "24px" }}>
+        {mode === "signin" ? "SIGN IN" : "CREATE ACCOUNT"}
+      </div>
+
+      {/* Fields */}
+      <div style={{ marginBottom: "16px" }}>
+        <div style={{ fontSize: "9px", letterSpacing: "0.16em", color: C.dim, fontFamily: "Calibri, sans-serif", marginBottom: "4px" }}>EMAIL</div>
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSubmit()}
+          style={inputStyle}
+          autoComplete="email"
+        />
+      </div>
+
+      <div style={{ marginBottom: "24px" }}>
+        <div style={{ fontSize: "9px", letterSpacing: "0.16em", color: C.dim, fontFamily: "Calibri, sans-serif", marginBottom: "4px" }}>PASSWORD</div>
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSubmit()}
+          style={inputStyle}
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
+        />
+      </div>
+
+      {/* Stay signed in */}
+      <div onClick={() => setStaySignedIn(!staySignedIn)}
+        style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "28px", cursor: "pointer" }}>
+        <div style={{
+          width: "18px", height: "18px", borderRadius: "3px",
+          border: `1.5px solid ${staySignedIn ? C.white : C.border}`,
+          background: staySignedIn ? C.white : "transparent",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "all 0.15s", flexShrink: 0,
+        }}>
+          {staySignedIn && (
+            <svg width="10" height="10" viewBox="0 0 10 10">
+              <polyline points="1,5 4,8 9,2" fill="none" stroke={C.bg} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
+        <div style={{ fontSize: "12px", color: C.charcoal, fontFamily: "Calibri, sans-serif" }}>Stay signed in</div>
+      </div>
+
+      {/* Error / message */}
+      {error && <div style={{ fontSize: "12px", color: "#CC4444", fontFamily: "Calibri, sans-serif", marginBottom: "16px", lineHeight: 1.5 }}>{error}</div>}
+      {message && <div style={{ fontSize: "12px", color: C.mid, fontFamily: "Calibri, sans-serif", marginBottom: "16px", lineHeight: 1.5 }}>{message}</div>}
+
+      {/* Submit */}
+      <button onClick={handleSubmit} disabled={loading}
+        style={{
+          width: "100%", padding: "14px", background: C.white, border: "none",
+          cursor: loading ? "not-allowed" : "pointer",
+          fontSize: "11px", letterSpacing: "0.18em", fontFamily: "Calibri, sans-serif",
+          color: C.bg, marginBottom: "16px", opacity: loading ? 0.6 : 1,
+          transition: "opacity 0.15s",
+        }}>
+        {loading ? "..." : mode === "signin" ? "SIGN IN" : "CREATE ACCOUNT"}
+      </button>
+
+      {/* Secondary actions */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <button onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); setMessage(null); }}
+          style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: "11px", color: C.mid, fontFamily: "Calibri, sans-serif", padding: 0 }}>
+          {mode === "signin" ? "Create account" : "Sign in"}
+        </button>
+        {mode === "signin" && (
+          <button onClick={handleForgot} disabled={loading}
+            style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: "11px", color: C.dim, fontFamily: "Calibri, sans-serif", padding: 0 }}>
+            Forgot password
+          </button>
+        )}
+      </div>
+
+      {/* Privacy */}
+      <div style={{ marginTop: "48px", textAlign: "center" }}>
+        <button onClick={() => setMode("privacy")}
+          style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: "10px", letterSpacing: "0.1em", color: C.dim, fontFamily: "Calibri, sans-serif" }}>
+          Privacy Policy
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// --- TAP CHECKBOX ---
 function TapCheckbox({ checked, onChange }) {
   return (
     <div onClick={() => onChange(!checked)}
@@ -98,19 +312,8 @@ function TapCheckbox({ checked, onChange }) {
   );
 }
 
-// --- LOADING ---
-function Loading() {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ fontSize: "10px", letterSpacing: "0.22em", color: C.dim, fontFamily: "Calibri, sans-serif" }}>
-        LOADING
-      </div>
-    </div>
-  );
-}
-
 // --- DAILY LOG ---
-function DailyLog({ rules }) {
+function DailyLog({ rules, user }) {
   const today = new Date();
   const dayNum = today.getDate();
   const monthName = today.toLocaleString("default", { month: "long" }).toUpperCase();
@@ -130,14 +333,14 @@ function DailyLog({ rules }) {
         .from("logs")
         .select("*")
         .eq("date", todayKey)
+        .eq("user_id", user.id)
         .single();
-      if (data && data.entries) {
-        setEntries(data.entries);
-      }
+      if (data && data.entries) setEntries(data.entries);
       setLoading(false);
     }
     loadLog();
-  }, [todayKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const saveLog = async (updatedEntries) => {
     setSaving(true);
@@ -146,6 +349,7 @@ function DailyLog({ rules }) {
       date: todayKey,
       entries: updatedEntries,
       score,
+      user_id: user.id,
     }, { onConflict: "date" });
     setSaving(false);
   };
@@ -172,32 +376,23 @@ function DailyLog({ rules }) {
           <div style={{ fontSize: "46px", fontFamily: "Georgia, serif", color: C.white, lineHeight: 1, letterSpacing: "-0.01em" }}>
             DAY {dayNum}
           </div>
-          {saving && (
-            <div style={{ fontSize: "9px", letterSpacing: "0.14em", color: C.dim, fontFamily: "Calibri, sans-serif", paddingBottom: "8px" }}>
-              SAVING...
-            </div>
-          )}
+          {saving && <div style={{ fontSize: "9px", letterSpacing: "0.14em", color: C.dim, fontFamily: "Calibri, sans-serif", paddingBottom: "8px" }}>SAVING...</div>}
         </div>
       </div>
 
       {activeRules.length === 0 ? (
         <div style={{ padding: "40px 0", textAlign: "center" }}>
           <div style={{ fontSize: "13px", color: C.dim, fontFamily: "Calibri, sans-serif", lineHeight: 1.6 }}>
-            No rules set for this month.{"\n"}Go to Rules to get started.
+            No rules set for this month. Go to Rules to get started.
           </div>
         </div>
       ) : (
         activeRules.map((rule, i) => (
           <div key={i} style={{ borderBottom: `1px solid ${C.border}`, paddingTop: "16px", paddingBottom: "16px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "14px" }}>
-              <TapCheckbox
-                checked={entries[i]?.checked || false}
-                onChange={(val) => update(i, { ...entries[i], checked: val })}
-              />
+              <TapCheckbox checked={entries[i]?.checked || false} onChange={(val) => update(i, { ...entries[i], checked: val })} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "10px", letterSpacing: "0.14em", color: C.dim, fontFamily: "Calibri, sans-serif", marginBottom: "3px" }}>
-                  RULE {i + 1}
-                </div>
+                <div style={{ fontSize: "10px", letterSpacing: "0.14em", color: C.dim, fontFamily: "Calibri, sans-serif", marginBottom: "3px" }}>RULE {i + 1}</div>
                 <div style={{
                   fontSize: "15px", color: entries[i]?.checked ? C.dim : C.white,
                   fontFamily: "Georgia, serif", lineHeight: 1.4,
@@ -250,12 +445,10 @@ function DailyLog({ rules }) {
 }
 
 // --- MONTHLY TRACKER ---
-function MonthlyTracker({ rules }) {
+function MonthlyTracker({ rules, user }) {
   const activeRules = rules.filter(r => r.trim() !== "");
   const daysInMonth = getDaysInMonth();
-  const today = new Date();
-  const todayDay = today.getDate();
-  
+  const todayDay = new Date().getDate();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   const [grid, setGrid] = useState(null);
@@ -263,27 +456,28 @@ function MonthlyTracker({ rules }) {
 
   useEffect(() => {
     async function loadLogs() {
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
       const start = `${year}-${month}-01`;
       const end = `${year}-${month}-${String(daysInMonth).padStart(2, "0")}`;
+      const activeRuleCount = rules.filter(r => r.trim() !== "").length;
 
       const { data } = await supabase
         .from("logs")
         .select("*")
         .gte("date", start)
-        .lte("date", end);
+        .lte("date", end)
+        .eq("user_id", user.id);
 
-      const newGrid = activeRules.map(() => Array(daysInMonth).fill(false));
+      const newGrid = Array.from({ length: activeRuleCount }, () => Array(daysInMonth).fill(false));
 
       if (data) {
         data.forEach(log => {
           const day = parseInt(log.date.split("-")[2]) - 1;
           if (log.entries) {
             log.entries.forEach((entry, ri) => {
-              if (ri < activeRules.length) {
-                newGrid[ri][day] = entry.checked || false;
-              }
+              if (ri < activeRuleCount) newGrid[ri][day] = entry.checked || false;
             });
           }
         });
@@ -301,9 +495,7 @@ function MonthlyTracker({ rules }) {
   return (
     <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 20px" }}>
       <div style={{ paddingTop: "52px", paddingBottom: "20px", borderBottom: `1px solid ${C.border}`, marginBottom: "20px" }}>
-        <div style={{ fontSize: "10px", letterSpacing: "0.2em", color: C.mid, fontFamily: "Calibri, sans-serif", marginBottom: "6px" }}>
-          {getMonthLabel().toUpperCase()}
-        </div>
+        <div style={{ fontSize: "10px", letterSpacing: "0.2em", color: C.mid, fontFamily: "Calibri, sans-serif", marginBottom: "6px" }}>{getMonthLabel().toUpperCase()}</div>
         <div style={{ fontSize: "32px", fontFamily: "Georgia, serif", color: C.white, lineHeight: 1 }}>TRACKER</div>
       </div>
 
@@ -326,17 +518,14 @@ function MonthlyTracker({ rules }) {
               <tbody>
                 {activeRules.map((rule, ri) => (
                   <tr key={ri}>
-                    <td style={{ paddingRight: "8px", fontSize: "9px", fontFamily: "Calibri, sans-serif", color: C.mid, letterSpacing: "0.1em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "72px" }}>
-                      R{ri + 1}
-                    </td>
+                    <td style={{ paddingRight: "8px", fontSize: "9px", fontFamily: "Calibri, sans-serif", color: C.mid, letterSpacing: "0.1em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "72px" }}>R{ri + 1}</td>
                     {days.map((d, di) => (
                       <td key={di} style={{ padding: "2px", textAlign: "center" }}>
                         <div style={{
                           width: "13px", height: "13px", borderRadius: "2px",
-                          background: grid[ri][di] ? C.white : "transparent",
-                          border: `1px solid ${grid[ri][di] ? C.white : C.border}`,
-                          margin: "0 auto",
-                          opacity: d > todayDay ? 0.2 : 1,
+                          background: grid[ri] && grid[ri][di] ? C.white : "transparent",
+                          border: `1px solid ${grid[ri] && grid[ri][di] ? C.white : C.border}`,
+                          margin: "0 auto", opacity: d > todayDay ? 0.2 : 1,
                         }} />
                       </td>
                     ))}
@@ -345,7 +534,6 @@ function MonthlyTracker({ rules }) {
               </tbody>
             </table>
           </div>
-
           <div style={{ marginTop: "24px", borderTop: `1px solid ${C.border}`, paddingTop: "16px" }}>
             {activeRules.map((rule, i) => (
               <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "10px", alignItems: "flex-start" }}>
@@ -402,7 +590,7 @@ function MonthDetail({ monthData, onBack }) {
   if (!stats) return (
     <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 20px" }}>
       <div style={{ paddingTop: "52px" }}>
-        <button onClick={onBack} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: "10px", letterSpacing: "0.14em", color: C.mid, fontFamily: "Calibri, sans-serif" }}>← BACK</button>
+        <button onClick={onBack} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: "10px", letterSpacing: "0.14em", color: C.dim, fontFamily: "Calibri, sans-serif" }}>← BACK</button>
         <div style={{ marginTop: "40px", fontSize: "13px", color: C.dim, fontFamily: "Calibri, sans-serif" }}>No data for this month.</div>
       </div>
     </div>
@@ -415,7 +603,7 @@ function MonthDetail({ monthData, onBack }) {
           <div style={{ fontSize: "10px", letterSpacing: "0.2em", color: C.mid, fontFamily: "Calibri, sans-serif", marginBottom: "6px" }}>HISTORY</div>
           <div style={{ fontSize: "28px", fontFamily: "Georgia, serif", color: C.white, lineHeight: 1 }}>{label.toUpperCase()}</div>
         </div>
-        <button onClick={onBack} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: "10px", letterSpacing: "0.14em", color: C.mid, fontFamily: "Calibri, sans-serif", paddingBottom: "4px" }}>← BACK</button>
+        <button onClick={onBack} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: "10px", letterSpacing: "0.14em", color: C.dim, fontFamily: "Calibri, sans-serif", paddingBottom: "4px" }}>← BACK</button>
       </div>
 
       <div style={{ background: C.surface, borderRadius: "4px", padding: "20px", marginBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -497,14 +685,14 @@ function MonthDetail({ monthData, onBack }) {
 }
 
 // --- HISTORY LIST ---
-function History({ onSelectMonth }) {
+function History({ user, onSelectMonth }) {
   const [months, setMonths] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadHistory() {
-      const { data: logs } = await supabase.from("logs").select("*").order("date", { ascending: false });
-      const { data: rulesData } = await supabase.from("rules").select("*").order("year", { ascending: false });
+      const { data: logs } = await supabase.from("logs").select("*").eq("user_id", user.id).order("date", { ascending: false });
+      const { data: rulesData } = await supabase.from("rules").select("*").eq("user_id", user.id).order("year", { ascending: false });
 
       if (!logs || logs.length === 0) { setLoading(false); return; }
 
@@ -543,9 +731,7 @@ function History({ onSelectMonth }) {
 
       {months.length === 0 ? (
         <div style={{ padding: "40px 0", textAlign: "center" }}>
-          <div style={{ fontSize: "13px", color: C.dim, fontFamily: "Calibri, sans-serif", lineHeight: 1.6 }}>
-            No history yet. Start logging to see your data here.
-          </div>
+          <div style={{ fontSize: "13px", color: C.dim, fontFamily: "Calibri, sans-serif", lineHeight: 1.6 }}>No history yet. Start logging to see your data here.</div>
         </div>
       ) : (
         months.map((month, i) => {
@@ -573,12 +759,10 @@ function History({ onSelectMonth }) {
 }
 
 // --- RULES ---
-function Rules({ rules, setRules }) {
+function Rules({ rules, setRules, user }) {
   const MAX = 5;
-  
   const [saving, setSaving] = useState(false);
   const saveTimer = useRef(null);
-
   const activeCount = rules.filter(r => r.trim() !== "").length;
 
   const updateRule = (i, val) => {
@@ -593,6 +777,7 @@ function Rules({ rules, setRules }) {
         month: getMonthKey(),
         year: d.getFullYear(),
         rules: next,
+        user_id: user.id,
       }, { onConflict: "month" });
       setSaving(false);
     }, 800);
@@ -601,9 +786,7 @@ function Rules({ rules, setRules }) {
   return (
     <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 20px" }}>
       <div style={{ paddingTop: "52px", paddingBottom: "20px", borderBottom: `1px solid ${C.border}`, marginBottom: "4px" }}>
-        <div style={{ fontSize: "10px", letterSpacing: "0.2em", color: C.mid, fontFamily: "Calibri, sans-serif", marginBottom: "6px" }}>
-          {getMonthLabel().toUpperCase()}
-        </div>
+        <div style={{ fontSize: "10px", letterSpacing: "0.2em", color: C.mid, fontFamily: "Calibri, sans-serif", marginBottom: "6px" }}>{getMonthLabel().toUpperCase()}</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
           <div style={{ fontSize: "32px", fontFamily: "Georgia, serif", color: C.white, lineHeight: 1 }}>RULES</div>
           {saving && <div style={{ fontSize: "9px", letterSpacing: "0.14em", color: C.dim, fontFamily: "Calibri, sans-serif", paddingBottom: "4px" }}>SAVING...</div>}
@@ -624,12 +807,7 @@ function Rules({ rules, setRules }) {
             value={rules[i] || ""}
             onChange={(e) => updateRule(i, e.target.value)}
             placeholder={i === 0 ? "e.g. 30 mins of exercise" : "Optional"}
-            style={{
-              width: "100%", border: "none", background: "transparent",
-              fontSize: "15px", fontFamily: "Georgia, serif",
-              color: rules[i]?.trim() ? C.white : C.dim,
-              outline: "none", boxSizing: "border-box", caretColor: C.white,
-            }}
+            style={{ width: "100%", border: "none", background: "transparent", fontSize: "15px", fontFamily: "Georgia, serif", color: rules[i]?.trim() ? C.white : C.dim, outline: "none", boxSizing: "border-box", caretColor: C.white }}
           />
         </div>
       ))}
@@ -637,35 +815,64 @@ function Rules({ rules, setRules }) {
       <div style={{ paddingTop: "16px", fontSize: "10px", letterSpacing: "0.12em", color: C.dim, fontFamily: "Calibri, sans-serif" }}>
         {activeCount} OF {MAX} RULES SET
       </div>
+
+      {/* Sign out */}
+      <div style={{ marginTop: "48px", borderTop: `1px solid ${C.border}`, paddingTop: "20px" }}>
+        <button onClick={() => supabase.auth.signOut()}
+          style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: "10px", letterSpacing: "0.16em", color: C.dim, fontFamily: "Calibri, sans-serif", padding: 0 }}>
+          SIGN OUT
+        </button>
+      </div>
     </div>
   );
 }
 
 // --- APP ---
 export default function AreteApp() {
+  const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [tab, setTab] = useState("log");
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [rules, setRules] = useState(["", "", "", "", ""]);
   const [rulesLoaded, setRulesLoaded] = useState(false);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthChecked(true);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
     async function loadRules() {
-      
       const { data } = await supabase
         .from("rules")
         .select("*")
         .eq("month", getMonthKey())
+        .eq("user_id", user.id)
         .single();
-      if (data && data.rules) {
-        setRules(data.rules);
-      }
+      if (data && data.rules) setRules(data.rules);
       setRulesLoaded(true);
     }
     loadRules();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const activeRules = rules.filter(r => r.trim() !== "");
+
+  if (!authChecked) return (
+    <div style={{ maxWidth: "390px", margin: "0 auto", height: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ fontSize: "10px", letterSpacing: "0.22em", color: C.dim, fontFamily: "Calibri, sans-serif" }}>LOADING</div>
+    </div>
+  );
+
+  if (!user) return <Auth onAuth={setUser} />;
 
   return (
     <div style={{
@@ -674,19 +881,15 @@ export default function AreteApp() {
       fontFamily: "Georgia, serif", position: "relative",
       boxShadow: "0 0 60px rgba(0,0,0,0.5)",
     }}>
-      <div style={{
-        position: "absolute", top: "18px", left: "20px",
-        fontSize: "12px", letterSpacing: "0.26em",
-        color: C.white, fontFamily: "Georgia, serif", zIndex: 10,
-      }}>ARETE</div>
+      <div style={{ position: "absolute", top: "18px", left: "20px", fontSize: "12px", letterSpacing: "0.26em", color: C.white, fontFamily: "Georgia, serif", zIndex: 10 }}>ARETE</div>
 
       {!rulesLoaded ? <Loading /> : (
         <>
-          {tab === "log" && <DailyLog rules={activeRules} />}
-          {tab === "tracker" && <MonthlyTracker rules={rules} />}
-          {tab === "history" && !selectedMonth && <History onSelectMonth={(m) => setSelectedMonth(m)} />}
+          {tab === "log" && <DailyLog rules={activeRules} user={user} />}
+          {tab === "tracker" && <MonthlyTracker rules={rules} user={user} />}
+          {tab === "history" && !selectedMonth && <History user={user} onSelectMonth={(m) => setSelectedMonth(m)} />}
           {tab === "history" && selectedMonth && <MonthDetail monthData={selectedMonth} onBack={() => setSelectedMonth(null)} />}
-          {tab === "rules" && <Rules rules={rules} setRules={setRules} />}
+          {tab === "rules" && <Rules rules={rules} setRules={setRules} user={user} />}
         </>
       )}
 

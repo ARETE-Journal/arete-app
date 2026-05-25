@@ -112,7 +112,7 @@ function Welcome({ onDone }) {
     {
       num: "01",
       title: "Set Your Rules",
-      body: "At the start of each month, define up to 5 Execution Rules. Clear, binary, actionable. If you cannot answer yes or no at the end of the day, rewrite the rule.",
+      body: "Each month, define up to 5 Daily Execution Rules. These should be binary actions. If you cannot answer 'Did I do this today?' with a clear yes or no, rewrite the rule.",
     },
     {
       num: "02",
@@ -122,7 +122,7 @@ function Welcome({ onDone }) {
     {
       num: "03",
       title: "Track Your Consistency",
-      body: "The Tracker shows your completion grid for the month. Streaks become visible. Gaps become undeniable. Use the data.",
+      body: "The Tracker shows your completion grid for the month. Use the data.",
     },
     {
       num: "04",
